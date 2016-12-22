@@ -1,7 +1,8 @@
 ====== Updates ======
-I have updated the python scripts to be compatible with the newest version of the Zabbix protocol. This requires the python protobix library to be installed. I have also found that it may be necessary to install urllib3 via package manager instead of pip. If installed via pip, it may not be properly linked with openssl and this will cause the scripts to fail. For the most part I have disabled checks for valid SSL certificates on the SVC.
 
-svc_mon2.py fails on my test SVC for unknown reasons. I have not been able to find documentation to troubleshoot the API calls against the SVC.
+- I have updated the python scripts to be compatible with the newest version of the Zabbix protocol. This requires the python protobix library to be installed. I have also found that it may be necessary to install urllib3 via package manager instead of pip. If installed via pip, it may not be properly linked with openssl and this will cause the scripts to fail. For the most part I have disabled checks for valid SSL certificates on the SVC.
+- _Special_Storwize_Block_Status.xml is updated to remove Cyrillic characters. The presence of these characters caused template import to fail for me. Messages were converted to English via google translate/common sense.
+- svc_mon2.py fails on my test SVC for unknown reasons. I have not been able to find documentation to troubleshoot the API calls against the SVC.
 
 Todo:
 - Add a command line/config file argument to enable/disable valid SSL certificate checks
