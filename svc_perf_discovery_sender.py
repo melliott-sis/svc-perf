@@ -22,6 +22,8 @@ import pywbem
 import getopt, sys
 from zbxsend import Metric, send_to_zabbix
 import logging
+import protobix
+import json
 
 def usage():
   print >> sys.stderr, "Usage: svc_perf_discovery_sender.py [--debug] --clusters <svc1>[,<svc2>...] --user <username> --password <pwd>"
@@ -68,7 +70,7 @@ def debug_print(message):
 
 for cluster in clusters:
   debug_print('Connecting to: %s' % cluster)
-  conn = pywbem.WBEMConnection('https://'+cluster, (user, password), 'root/ibm') 
+  conn = pywbem.WBEMConnection('https://'+cluster, (user, password), 'root/ibm', no_verification=True) 
   conn.debug = True
 
   for discovery in DISCOVERY_TYPES:
@@ -76,39 +78,56 @@ for cluster in clusters:
 
     if discovery == 'volume-mdisk' or discovery == 'volume':
       for vol in conn.ExecQuery('WQL', 'select DeviceID, ElementName from IBMTSSVC_StorageVolume'):
-        output.append( '{"{#TYPE}":"%s", "{#NAME}":"%s", "{#ID}":"%s"}' % ('volume', vol.properties['ElementName'].value, vol.properties['DeviceID'].value) )
+        output.append( '{"{#TYPE}":"%s", "{#NAME}":"%s", "{#ID}":%s}' % ('volume', vol.properties['ElementName'].value, vol.properties['DeviceID'].value) )
 
     if discovery == 'volume-mdisk' or discovery == 'mdisk':
       for mdisk in conn.ExecQuery('WQL', 'select DeviceID, ElementName from IBMTSSVC_BackendVolume'):
-        output.append( '{"{#TYPE}":"%s", "{#NAME}":"%s", "{#ID}":"%s"}' % ('mdisk', mdisk.properties['ElementName'].value, mdisk.properties['DeviceID'].value) )
+        output.append( '{"{#TYPE}":"%s", "{#NAME}":"%s", "{#ID}":%s}' % ('mdisk', mdisk.properties['ElementName'].value, mdisk.properties['DeviceID'].value) )
 
     if discovery == 'pool':
       for pool in conn.ExecQuery('WQL', 'select PoolID, ElementName from IBMTSSVC_ConcreteStoragePool'):
-        output.append( '{"{#TYPE}":"%s","{#NAME}":"%s","{#ID}":"%s"}' % ('pool', pool.properties['ElementName'].value, pool.properties['PoolID'].value) )
+        output.append( '{"{#TYPE}":"%s","{#NAME}":"%s","{#ID}":%s}' % ('pool', pool.properties['ElementName'].value, pool.properties['PoolID'].value) )
 
-    json = []
-    json.append('{"data":[')
+    json_list = []
+
+    if discovery == 'volume-mdisk':
+      json_list.append(('{ "%s": {"svc.discovery.volume-mdisk":[') % cluster)
+
+    if discovery == 'volume':                         
+      json_list.append(('{ "%s": {"svc.discovery.volume":[') % cluster)
+
+    if discovery == 'mdisk':                               
+      json_list.append(('{ "%s": {"svc.discovery.mdisk":[') % cluster)  
+
+    if discovery == 'pool':                               
+      json_list.append(('{ "%s": {"svc.discovery.pool":[') % cluster)
+  
+    # json_list.append('{"data":[')
 
     for i, v in enumerate( output ):
       if i < len(output)-1:
-        json.append(v+',')
+        json_list.append(v+',')
       else:
-        json.append(v)
-    json.append(']}')
+        json_list.append(v)
+    json_list.append(']}}')
 
-    json_string = ''.join(json)
-    debug_print(json_string)
+    json_string = ''.join(json_list)
+    parsed = json.loads(json_string)
+    debug_print(json.dumps(parsed, indent=4, sort_keys=True))
+    # debug_print(json_string)
 
     trapper_key = 'svc.discovery.%s' % discovery
-    debug_print('Sending to host=%s, key=%s' % (cluster, trapper_key))
+    debug_print('Sending to host=localhost, key=%s' % (trapper_key))
 
     #send json to LLD trapper item with zbxsend module
     if debug:
-      logging.basicConfig(level=logging.INFO)
+      logging.basicConfig(level=logging.DEBUG)
     else:
       logging.basicConfig(level=logging.WARNING)
-    send_to_zabbix([Metric(cluster, trapper_key, json_string)], 'localhost', 10051)
+    #send_to_zabbix([Metric(cluster, trapper_key, json_string)], 'localhost', 10051)
+    zbx_datacontainer = protobix.DataContainer()
+    zbx_datacontainer.debug_level = 5
+    zbx_datacontainer.data_type = 'lld'
+    zbx_datacontainer.add(parsed)
+    zbx_datacontainer.send()
     debug_print('')
-
-
-

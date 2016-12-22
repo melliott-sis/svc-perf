@@ -29,6 +29,9 @@
 import getopt, sys, logging, pprint, datetime
 import requests, json
 from zbxsend import Metric, send_to_zabbix
+from requests.packages.urllib3.exceptions import InsecureRequestWarning
+
+requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
 SVC_CONN_STATUS_TMPL='custom.svc.status.%s'
 UNIFIED_CONN_STATUS_TMPL='custom.svc.unified.status.%s'
@@ -121,10 +124,11 @@ rpc_request['methodArgs'] = (1, False, 0) #lastEventId=1 to get all fresh events
 r = s.post(svc_url+'/RPCAdapter', headers={'content-type': 'application/json'}, data=json.dumps(rpc_request), verify=False)
   
 if debug:
-  #print r.request.headers
-  #print r.headers
-  #pprint.pprint(r.cookies)
-  #print r.text
+  print "Request Headers: ", r.request.headers
+  print "Headers: ", r.headers
+  print "Cookies: ", pprint.pprint(r.cookies)
+  print "Request: ", pprint.pprint(rpc_request)
+  print "Text: ", r.text
   print "RPC request status: ", r.status_code
   
 # check rpc response for errors
@@ -255,6 +259,3 @@ if len(zabbix_metrics):
   else:
     logging.basicConfig(level=logging.WARNING)
   send_to_zabbix(zabbix_metrics, 'localhost', 10051)
-
-
-  

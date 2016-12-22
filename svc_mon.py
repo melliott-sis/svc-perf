@@ -53,8 +53,8 @@ for o, a in opts:
     usage()
     sys.exit()
 
-if debug:
-  print 'clusters:', clusters
+#if debug:
+  # print 'clusters:', clusters
 
 if not clusters:
   print >> sys.stderr, '--clusters option must be set'
@@ -73,7 +73,7 @@ if not user or not password:
 
 for cluster in clusters:
   ''' connect to Storwize CIM provider '''
-  conn = pywbem.WBEMConnection('https://'+cluster, (user, password), 'root/ibm') 
+  conn = pywbem.WBEMConnection('https://'+cluster, (user, password), 'root/ibm', no_verification=True) 
   conn.debug = True
 
   pools = conn.ExecQuery('WQL', 'select * from IBMTSSVC_ConcreteStoragePool')
@@ -109,8 +109,3 @@ for cluster in clusters:
   #svc1-blk svc.mdisk.nativeStatus[35] 1365594894 1
   for md in conn.ExecQuery('WQL', 'select DeviceID, NativeStatus from IBMTSSVC_BackendVolume'):
     print '%s svc.mdisk.%s[%s] %d %s' % ( cluster, 'nativeStatus', md.properties['DeviceID'].value, timestamp, md.properties['NativeStatus'].value )
-    
-   
-
-
-

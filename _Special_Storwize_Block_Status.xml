@@ -55,7 +55,7 @@
                     <publickey/>
                     <privatekey/>
                     <port/>
-                    <description>Количество незакрытых ошибок на Storwize (Monitoring - Events в GUI)</description>
+                    <description>Number of Errors Detected Storwize (Monitoring - Events - GUI)</description>
                     <inventory_link>0</inventory_link>
                     <applications>
                         <application>
@@ -898,17 +898,17 @@
             <url/>
             <status>0</status>
             <priority>2</priority>
-            <description>Нет данных по состоянию Storwize</description>
+            <description>No data collected for Storwize</description>
             <type>0</type>
             <dependencies/>
         </trigger>
         <trigger>
             <expression>{_Special_Storwize_Block_Status:svc_status.sh[&quot;{HOST.CONN}&quot;].last(0)}&gt;0</expression>
-            <name>{HOST.NAME}: Есть ошибки ({ITEM.LASTVALUE1} шт.)</name>
+            <name>{HOST.NAME}: Problem ({ITEM.LASTVALUE1})</name>
             <url/>
             <status>0</status>
             <priority>4</priority>
-            <description>Количество незакрытых ошибок в консоли Storwize (Monitoring - Events)</description>
+            <description>Number of Outstanding Errors Storwize (Monitoring - Events)</description>
             <type>0</type>
             <dependencies/>
         </trigger>
